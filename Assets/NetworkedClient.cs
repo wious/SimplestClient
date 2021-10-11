@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 
 public class NetworkedClient : MonoBehaviour
 {
+    
 
     int connectionID;
     int maxConnections = 1000;
@@ -31,6 +32,8 @@ public class NetworkedClient : MonoBehaviour
 
         UpdateNetworkConnection();
     }
+    
+    
 
     private void UpdateNetworkConnection()
     {
