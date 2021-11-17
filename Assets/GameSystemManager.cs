@@ -5,93 +5,160 @@ using UnityEngine.UI;
 
 public class GameSystemManager : MonoBehaviour
 {
-    private GameObject inputFieldUsername, inputFieldPassword, toggleLogin, toggleCreate, buttonSubmit;
-   
+    GameObject  inputFielddUserName,
+        inputFieldPassword,
+        buttonSubmit,
+        toggleLogin,
+        toggleCreate;
+
     GameObject networkedClient;
-    
+
+    GameObject findJoinGameSessionButton, placeHolderGameButton;
     // Start is called before the first frame update
     void Start()
     {
         GameObject[] allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>() ;
-        
         foreach (GameObject go in allObjects)
         {
-            if (go.name == "InputFieldUsername")
-                inputFieldUsername = go;
+            if (go.name == "InputFieldUserName")
+                inputFielddUserName = go;
             else if (go.name == "InputFieldPassword")
                 inputFieldPassword = go;
-            else if (go.name == "ToggleLoging")
+            else if (go.name == "ButtonSubmit")
+                buttonSubmit = go;
+            else if (go.name == "ToggleLogin")
                 toggleLogin = go;
             else if (go.name == "ToggleCreate")
                 toggleCreate = go;
-            else if (go.name == "ButtonSubmit")
-                buttonSubmit = go;
             else if (go.name == "NetworkedClient")
                 networkedClient = go;
+            
+            else if (go.name == "FindJoinGameSessionButton")
+                findJoinGameSessionButton = go;
+            else if (go.name == "PlaceHolderGameButton")
+                placeHolderGameButton = go;
+           
         }
-        buttonSubmit.GetComponent<Button>().onClick.AddListener(SubmitButtonPressed);
+           
+        buttonSubmit.GetComponent<Button>().onClick.AddListener(SubmitButtonPress);
         toggleCreate.GetComponent<Toggle>().onValueChanged.AddListener(ToggleCreateValueChanged);
-        toggleLogin.GetComponent<Toggle>().onValueChanged.AddListener(ToggleLogInValueChanged);
+        toggleLogin.GetComponent<Toggle>().onValueChanged.AddListener(ToggleLoginValueChanged);
+        
+        findJoinGameSessionButton.GetComponent<Button>().onClick.AddListener(findJoinGameSessionButtonPressed);
+        placeHolderGameButton.GetComponent<Button>().onClick.AddListener(placeHolderGameButtonPressed);
+
+        ChangeGameState(GameStates.Login);
     }
 
     // Update is called once per frame
     void Update()
     {
+        /*if (Input.GetKeyDown(KeyCode.A))
+        {
+            ChangeGameState(GameStates.Login);
+        }
         
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            ChangeGameState(GameStates.MainMenu);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            ChangeGameState(GameStates.WaitingForMatch);
+        }
+        
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            ChangeGameState(GameStates.PlayingTicTacToe);
+        }*/
     }
 
-    public void SubmitButtonPressed()
+    private void SubmitButtonPress()
     {
-        string n = inputFieldUsername.GetComponent<InputField>().text;
+        string n = inputFielddUserName.GetComponent<InputField>().text;
         string p = inputFieldPassword.GetComponent<InputField>().text;
 
         if (toggleLogin.GetComponent<Toggle>().isOn)
-        {Debug.Log(ClientToSeverSignifiers.Login + "," + n + "," + p);
-           // networkedClient.GetComponent<NetworkedClient>().SendMessageToHost(ClientToSeverSignifiers.Login + "," + n + "," + p);
+        {
+            //Debug.Log(ClientToServerSignifiers.Login + "," + n + "," + p);
+            networkedClient.GetComponent<NetworkedClient>().SendMessageToHost(ClientToServerSignifiers.Login + "," + n + "," + p);
         }
         else
-        {
-            Debug.Log(ClientToSeverSignifiers.CreateAccount + "," + n + "," + p);
-           // networkedClient.GetComponent<NetworkedClient>().SendMessageToHost(ClientToSeverSignifiers.CreateAccount + "," + n + "," + p);
+        {               
+            //Debug.Log(ClientToServerSignifiers.CreateAccount + "," + n + "," + p);
+            networkedClient.GetComponent<NetworkedClient>().SendMessageToHost(ClientToServerSignifiers.CreateAccount + "," + n + "," + p);
         }
+
     }
 
-    public void ToggleCreateValueChanged(bool val)
+    private void findJoinGameSessionButtonPressed()
     {
-        toggleLogin.GetComponent<Toggle>().SetIsOnWithoutNotify(!val);
+        networkedClient.GetComponent<NetworkedClient>().SendMessageToHost(ClientToServerSignifiers.AddToGameSessionQueue + "");
+        ChangeGameState(GameStates.WaitingForMatch);
     }
-
-    public void ToggleLogInValueChanged(bool val)
+    
+    private void placeHolderGameButtonPressed()
     {
-        toggleCreate.GetComponent<Toggle>().SetIsOnWithoutNotify(!val);
+        networkedClient.GetComponent<NetworkedClient>().SendMessageToHost(ClientToServerSignifiers.TicTacToePlay + "");
+    }
+    private void ToggleCreateValueChanged(bool newValue)
+    {
+        //Debug.Log("We Create!");
+        toggleLogin.GetComponent<Toggle>().SetIsOnWithoutNotify(!newValue);
+    }
+    private void ToggleLoginValueChanged(bool newValue)
+    {
+        //Debug.Log("We Login!");
+        toggleCreate.GetComponent<Toggle>().SetIsOnWithoutNotify(!newValue);
     }
 
+    public void ChangeGameState(int newState)
+    {
+        // very tranditional way to do gamestates 
+        
+        inputFielddUserName.SetActive(false);
+        inputFieldPassword.SetActive(false);
+        buttonSubmit.SetActive(false);
+        toggleLogin.SetActive(false);
+        toggleCreate.SetActive(false);
+        findJoinGameSessionButton.SetActive(false);
+        placeHolderGameButton.SetActive(false);
+
+        if (newState == GameStates.Login)
+        {
+            inputFielddUserName.SetActive(true);
+            inputFieldPassword.SetActive(true);
+            buttonSubmit.SetActive(true);
+            toggleLogin.SetActive(true);
+            toggleCreate.SetActive(true);
+        }
+        else if (newState ==GameStates.MainMenu)
+        {
+            findJoinGameSessionButton.SetActive(true);
+            
+        }
+        else if (newState ==GameStates.WaitingForMatch)
+        {
+           
+        }
+        else if (newState ==GameStates.PlayingTicTacToe)
+        {
+            placeHolderGameButton.SetActive(true);
+        }
+
+    }
 }
 
-public static class ClientToSeverSignifiers
+public static class GameStates
 {
     public const int Login = 1;
-    public const int CreateAccount = 2;
-}
-
-public static class ServertoClientSignifiers
-{
-    public const int LoginResponse = 1;
-
-   /* public const int LoginFailure = 2;
-
-    public const int CreateAccountSuccess = 1;
-    public const int CreateAccountFailure = 2;*/
+    
+    public const int MainMenu = 2;
+    
+    public const int WaitingForMatch = 3;
+    
+    public const int PlayingTicTacToe = 4;
+    //public const int Login = 1;
 
 }
-
-/*public static class LoginResponse
-{
-    public const int Success = 1;
-
-    public const int FailureNameInUse = 2;
-
-    public const int FailureNameNotFound = 3;
-
-    public const int FailureIncorrectPassword = 4;
-}*/
